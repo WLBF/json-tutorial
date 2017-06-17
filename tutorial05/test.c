@@ -128,12 +128,52 @@ static void test_parse_string() {
 }
 
 static void test_parse_array() {
+    int i, j;
     lept_value v;
 
     lept_init(&v);
     EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "[ ]"));
     EXPECT_EQ_INT(LEPT_ARRAY, lept_get_type(&v));
     EXPECT_EQ_SIZE_T(0, lept_get_array_size(&v));
+    lept_free(&v);
+
+    lept_init(&v);
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "[ null , false , true , 123 , \"abc\" ]"));
+    EXPECT_EQ_INT(LEPT_ARRAY, lept_get_type(&v));
+    EXPECT_EQ_SIZE_T(5, lept_get_array_size(&v));
+
+    lept_value* e0 = lept_get_array_element(&v, 0);
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(e0));
+
+    lept_value* e1 = lept_get_array_element(&v, 1);
+    EXPECT_EQ_INT(LEPT_FALSE, lept_get_type(e1));
+
+    lept_value* e2 = lept_get_array_element(&v, 2);
+    EXPECT_EQ_INT(LEPT_TRUE, lept_get_type(e2));
+
+    lept_value* e3 = lept_get_array_element(&v, 3);
+    EXPECT_EQ_INT(LEPT_NUMBER, lept_get_type(e3));
+    EXPECT_EQ_DOUBLE(123.0, lept_get_number(e3));
+
+    lept_value* e4 = lept_get_array_element(&v, 4);
+    EXPECT_EQ_INT(LEPT_STRING, lept_get_type(e4));
+    EXPECT_EQ_STRING("abc", lept_get_string(e4), lept_get_string_length(e4));
+    lept_free(&v);
+
+    lept_init(&v);
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
+    EXPECT_EQ_INT(LEPT_ARRAY, lept_get_type(&v));
+    EXPECT_EQ_SIZE_T(4, lept_get_array_size(&v));
+    for (i = 0; i < 4; ++i) {
+        lept_value* e5 = lept_get_array_element(&v, i);
+        EXPECT_EQ_INT(LEPT_ARRAY, lept_get_type(e5));
+        EXPECT_EQ_SIZE_T(i, lept_get_array_size(e5));
+        for (j = 0; j < i; ++j) {
+            lept_value* e6 = lept_get_array_element(e5, j);
+            EXPECT_EQ_INT(LEPT_NUMBER, lept_get_type(e6));
+            EXPECT_EQ_DOUBLE(j * 1.0, lept_get_number(e6));
+        }
+    }
     lept_free(&v);
 }
 
