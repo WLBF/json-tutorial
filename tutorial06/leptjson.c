@@ -239,6 +239,7 @@ static int lept_parse_object(lept_context* c, lept_value* v) {
     size_t size;
     lept_member m;
     int ret, i;
+    char *s;
     EXPECT(c, '{');
     lept_parse_whitespace(c);
     if (*c->json == '}') {
@@ -252,8 +253,9 @@ static int lept_parse_object(lept_context* c, lept_value* v) {
     size = 0;
     for (;;) {
         lept_init(&m.v);
-        memcpy();
-        lept_parse_string_raw(c, &m.k, &m.klen);
+        if ((ret = lept_parse_string_raw(c, &s, &m.klen)) != LEPT_PARSE_OK)
+            break;
+        memcpy(m.k = (char*)malloc(m.klen * sizeof(char)), s, m.klen);
         lept_parse_whitespace(c);
         if (*c->json == ':') {
             c->json++;
@@ -283,7 +285,11 @@ static int lept_parse_object(lept_context* c, lept_value* v) {
                 return LEPT_PARSE_OK;
         }
     }
-    /* \todo Pop and free members on the stack */
+    for (i = 0; i < size; i++) {
+        lept_member* m = (lept_member*)lept_context_pop(c, sizeof(lept_member));
+        free(m->k);
+        lept_free(&m->v);
+    }
     return ret;
 }
 
